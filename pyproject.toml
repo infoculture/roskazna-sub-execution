@@ -16,6 +16,8 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8"]
+# Тетрадка docs/examples.ipynb
+notebook = ["pandas>=2.2", "matplotlib>=3.9", "jupyter>=1.1", "nbconvert>=7.16"]
 
 [project.scripts]
 roskazna-kbs = "roskazna_kbs.cli:main"

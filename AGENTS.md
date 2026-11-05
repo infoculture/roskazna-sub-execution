@@ -26,3 +26,4 @@
 * Схема БД и принципы — [docs/database.md](docs/database.md).
 * Сопровождение и типовые правки — [docs/maintenance.md](docs/maintenance.md).
 * Покрытие (генерируется) — [docs/coverage.md](docs/coverage.md).
+* Примеры запросов и графиков — [docs/examples.ipynb](docs/examples.ipynb).

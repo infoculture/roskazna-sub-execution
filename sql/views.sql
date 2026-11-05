@@ -7,16 +7,22 @@ SELECT l.line_id, l.report_id, l.line_no, l.sheet_name, l.row_no, i.*
 FROM line l
 JOIN indicator i USING (indicator_id);
 
--- Последняя версия отчёта: если отчёт на ту же дату по той же форме и территории
--- есть и в месячном, и в годовом пакете (срез на 1 января), предпочтителен годовой.
+-- Предпочтительная версия отчёта. Один отчёт может прийти в нескольких пакетах
+-- (срез на 1 января — в месячном и годовом; годовой пакет 2007 г. содержит и месячные
+-- отчёты) и в разных файлах одного пакета. Порядок: годовой пакет → годовая форма
+-- (Mes_428y) → более поздний пакет. Отчёты «приносящей доход деятельности» (до 2008 г.)
+-- — отдельная группа; «бюджетная деятельность» и отчёт без вида деятельности — одна.
 CREATE OR REPLACE VIEW v_report AS
 SELECT r.*,
        t.name        AS territory_name,
        t.okrug_code,
        t.okrug_name,
        row_number() OVER (
-           PARTITION BY r.form_code, r.report_date, r.territory_code, r.activity
-           ORDER BY CASE r.publication_type WHEN 'annual' THEN 0 ELSE 1 END, r.package_no DESC
+           PARTITION BY r.form_code, r.report_date, r.territory_code,
+                        CASE WHEN r.activity = 'income_generating' THEN 'income_generating' ELSE 'main' END
+           ORDER BY CASE r.publication_type WHEN 'annual' THEN 0 ELSE 1 END,
+                    CASE WHEN regexp_matches(r.member_path, '(?i)Mes_\d{3}v?y_') THEN 0 ELSE 1 END,
+                    r.package_no DESC, r.report_id
        ) = 1 AS is_preferred
 FROM report r
 LEFT JOIN territory t USING (territory_code);
@@ -88,22 +94,43 @@ WHERE r.form_code = '0503317' AND l.section = 'sources'
 GROUP BY ALL;
 
 -- Ключевые итоги ф. 0503317 по территориям и датам: доходы, расходы и результат
--- исполнения (дефицит/профицит) консолидированного бюджета субъекта и ТГВФ.
--- Итоговые строки — первые строки разделов с «х» в кодовой графе, наименование «Доходы…» / «Расходы…»
--- (коды строк в макетах 2020–2021 гг. не заполнены, до 2010 г. — «Доходы - всего»).
+-- исполнения (дефицит «−» / профицит «+») консолидированного бюджета субъекта и ТГВФ.
+-- Итоговые строки находятся по коду, а не по названию (названия менялись):
+--   доходы   — группа 850 (до 2011 г.) или строка с «х» в коде «Доходы бюджета — всего/итого»;
+--   расходы  — Рз/Пр 9600 (до 2011 г.) или строка с «х» «Расходы бюджета — всего/итого»;
+--   результат — Рз/Пр 7900 (до 2011 г.) или строка 450.
+-- «Итого внутренних оборотов» (870 / 9700) в итоги не входит. Только ф. 0503317 (с 2005 г.).
 CREATE OR REPLACE VIEW v_0503317_totals AS
-SELECT r.report_id, r.report_date, r.period_year, r.period_months, r.territory_code, r.territory_name, r.okrug_code,
-       max(v.value) FILTER (WHERE l.section = 'income'  AND l.name ILIKE 'доходы%'  AND v.measure = 'approved') AS income_approved,
-       max(v.value) FILTER (WHERE l.section = 'income'  AND l.name ILIKE 'доходы%'  AND v.measure = 'executed') AS income_executed,
-       max(v.value) FILTER (WHERE l.section = 'expense' AND l.name ILIKE 'расходы%' AND v.measure = 'approved') AS expense_approved,
-       max(v.value) FILTER (WHERE l.section = 'expense' AND l.name ILIKE 'расходы%' AND v.measure = 'executed') AS expense_executed,
-       max(v.value) FILTER (WHERE l.section = 'expense' AND l.name ILIKE 'результат исполнения%' AND v.measure = 'approved') AS result_approved,
-       max(v.value) FILTER (WHERE l.section = 'expense' AND l.name ILIKE 'результат исполнения%' AND v.measure = 'executed') AS result_executed
+WITH t AS (
+    SELECT l.report_id, v.measure, v.value,
+           CASE
+               WHEN l.section = 'income' AND (l.kbk_code LIKE '850%'
+                    OR (l.is_total_marker AND l.name ILIKE 'доходы%' AND coalesce(l.kbk_code, '') NOT LIKE '870%'))
+                   THEN 'income'
+               WHEN l.section = 'expense' AND (l.rzpr_code = '9600'
+                    OR (l.is_total_marker AND l.name ILIKE 'расходы%' AND l.rzpr_code IS NULL))
+                   THEN 'expense'
+               WHEN l.section = 'expense' AND (l.rzpr_code = '7900' OR l.line_code = '450')
+                   THEN 'result'
+           END AS kind
+    FROM v_line l
+    JOIN value v USING (line_id)
+    WHERE l.form_code = '0503317' AND l.section IN ('income', 'expense')
+      AND v.budget_level = 'cons_subject_tgvf'
+      AND (l.is_total_marker OR l.kbk_code LIKE '850%' OR l.rzpr_code IN ('9600', '7900') OR l.line_code = '450')
+)
+SELECT r.report_id, r.report_date, r.period_year, r.period_months, r.publication_type,
+       r.territory_code, r.territory_name, r.okrug_code,
+       max(t.value) FILTER (WHERE kind = 'income'  AND measure = 'approved') AS income_approved,
+       max(t.value) FILTER (WHERE kind = 'income'  AND measure = 'executed') AS income_executed,
+       max(t.value) FILTER (WHERE kind = 'expense' AND measure = 'approved') AS expense_approved,
+       max(t.value) FILTER (WHERE kind = 'expense' AND measure = 'executed') AS expense_executed,
+       max(t.value) FILTER (WHERE kind = 'result'  AND measure = 'approved') AS result_approved,
+       max(t.value) FILTER (WHERE kind = 'result'  AND measure = 'executed') AS result_executed
 FROM v_report r
-JOIN v_line l USING (report_id)
-JOIN value v USING (line_id)
-WHERE r.form_code = '0503317' AND r.is_preferred AND v.budget_level = 'cons_subject_tgvf'
-  AND l.section IN ('income', 'expense') AND l.is_total_marker
+JOIN t USING (report_id)
+WHERE r.form_code = '0503317' AND r.is_preferred AND coalesce(r.activity, '') <> 'income_generating'
+  AND t.kind IS NOT NULL
 GROUP BY ALL;
 
 -- «Шахматки» с наименованием показателя. Срез может прийти в нескольких пакетах

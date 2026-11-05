@@ -32,7 +32,8 @@ data/catalog/           реестры (в git): catalog.csv, files.csv, members
 data/raw/zip/           скачанные пакеты (не в git; воспроизводятся командой download)
 data/db/                части Parquet и база DuckDB (не в git; воспроизводятся командой build)
 data/export/            выгрузка таблиц БД в Parquet (не в git; команда export)
-docs/                   документация: источник, содержание файлов, схема БД, примеры запросов
+docs/                   документация: источник, содержание файлов, схема БД, примеры запросов,
+                        тетрадка Jupyter с визуализациями (examples.ipynb)
 sql/schema.sql          схема БД (DDL)
 sql/views.sql           витрины (представления)
 sql/dicts/*.csv         справочники форм, разделов, типов публикаций
@@ -120,7 +121,8 @@ WHERE report_date = DATE '2026-09-01'
 ORDER BY expense_executed DESC;
 ```
 
-Больше примеров — [docs/queries.md](docs/queries.md).
+Больше примеров — [docs/queries.md](docs/queries.md); тетрадка с запросами, сравнениями и
+графиками — [docs/examples.ipynb](docs/examples.ipynb) (`uv pip install -e ".[notebook]"`).
 
 ## Тесты
 

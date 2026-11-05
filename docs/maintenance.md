@@ -9,6 +9,7 @@ python -m roskazna_kbs download                   # скачать только 
 python -m roskazna_kbs build                      # разобрать новые/изменённые пакеты, пересобрать БД
 python -m roskazna_kbs export                     # обновить Parquet
 python scripts/coverage.py                        # обновить docs/coverage.md
+jupyter nbconvert --to notebook --execute --inplace docs/examples.ipynb   # пересчитать тетрадку
 ```
 
 `build` разбирает пакет, только если для него нет готовых частей

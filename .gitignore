@@ -21,3 +21,6 @@ data/export/
 # Реестры файлов внутри пакетов и листов — большие, воспроизводятся командами inventory / profile
 data/catalog/members.csv
 data/catalog/sheets.csv
+
+# Служебные файлы Jupyter
+.ipynb_checkpoints/

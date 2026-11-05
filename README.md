@@ -122,7 +122,51 @@ ORDER BY expense_executed DESC;
 ```
 
 Больше примеров — [docs/queries.md](docs/queries.md); тетрадка с запросами, сравнениями и
-графиками — [docs/examples.ipynb](docs/examples.ipynb) (`uv pip install -e ".[notebook]"`).
+графиками — [docs/examples.ipynb](docs/examples.ipynb) (см. ниже).
+
+## Тетрадка с примерами (Jupyter)
+
+[docs/examples.ipynb](docs/examples.ipynb) — запросы, сравнения и графики по собранной базе:
+итоги 2005–2025 гг., исполнение внутри года, регионы, структура доходов и расходов, уровни
+бюджета, федеральные округа, трансферты, проверки качества. Тетрадка хранится вместе с
+результатами, поэтому её можно читать без запуска (на GitHub, в VS Code, в JupyterLab).
+
+**Что нужно для запуска**
+
+* собранная БД `data/db/roskazna_kbs.duckdb` (`python -m roskazna_kbs build`);
+* для последнего раздела — Parquet-выгрузка `data/export/` (`python -m roskazna_kbs export`);
+* зависимости тетрадки (pandas, matplotlib, JupyterLab):
+
+```bash
+uv pip install -e ".[notebook]"
+```
+
+**Интерактивный запуск в JupyterLab**
+
+```bash
+.venv/bin/jupyter lab docs/examples.ipynb
+```
+
+Откроется браузер (по умолчанию <http://localhost:8888>); ядро — «Python 3» из `.venv`.
+Выполните все ячейки: меню **Run → Run All Cells** (или **Kernel → Restart Kernel and Run All Cells**),
+затем меняйте SQL в ячейках и перезапускайте их по одной (`Shift+Enter`). Классический интерфейс —
+`.venv/bin/jupyter notebook docs/examples.ipynb`. В VS Code и PyCharm откройте файл и выберите
+интерпретатор `.venv/bin/python`.
+
+* Первые две ячейки подключают БД и задают оформление графиков; функция `q("SELECT …")`
+  возвращает результат запроса как `pandas.DataFrame`.
+* Путь к БД определяется от каталога запуска (корень репозитория или `docs/`); при другом
+  расположении задайте `ROOT` в первой ячейке.
+* БД открывается только для чтения (`read_only=True`): тетрадку можно держать открытой вместе с
+  другими читателями, но не во время `build` — сборка заменяет файл БД. После пересборки
+  перезапустите ядро.
+
+**Пересчёт без интерфейса** (например, после обновления данных — графики и таблицы в файле
+обновятся):
+
+```bash
+.venv/bin/jupyter nbconvert --to notebook --execute --inplace docs/examples.ipynb
+```
 
 ## Тесты
 

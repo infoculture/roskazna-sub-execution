@@ -1,0 +1,23 @@
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+*.egg-info/
+.DS_Store
+
+# Служебный кеш (CA-бандл, HTML страниц каталога)
+data/.cache/
+*.part
+
+# Исходные пакеты (десятки ГБ) — воспроизводятся командой `download`
+data/raw/
+
+# База DuckDB воспроизводится командой `build`
+data/db/
+
+# Parquet-выгрузка воспроизводится командой `export`
+data/export/
+
+# Реестры файлов внутри пакетов и листов — большие, воспроизводятся командами inventory / profile
+data/catalog/members.csv
+data/catalog/sheets.csv

@@ -3,6 +3,8 @@
 Все запросы — к `data/db/roskazna_kbs.duckdb` (`duckdb data/db/roskazna_kbs.duckdb`).
 Запросы с графиками (итоги по годам, исполнение внутри года, регионы, структура доходов и
 расходов, уровни бюджета, федеральные округа, трансферты) — в тетрадке [examples.ipynb](examples.ipynb).
+Примеры по каждой форме — в [forms/](forms/README.md); как не задвоить суммы —
+[database.md](database.md#как-агрегировать).
 
 ## Итоги по территориям
 
@@ -72,12 +74,14 @@ ORDER BY line_no, graph;
 ## Итоги по РФ и федеральным округам («шахматки»)
 
 ```sql
+-- «Доходы бюджета — итого» по РФ и федеральным округам (округа — по наименованию:
+-- их коды в «шахматках» — порядковые номера строк, см. forms/chess.md)
 SELECT report_date, territory_name, indicator_name, value
 FROM v_chess
 WHERE is_preferred AND section = 'income' AND budget_level = 'cons_subject_tgvf'
-  AND indicator_code LIKE '010 ***%'          -- «Доходы бюджета — итого»
+  AND line_code = '010' AND classification_code = '85000000000000000'
   AND report_date >= DATE '2025-01-01'
-ORDER BY report_date, territory_code;
+ORDER BY report_date, territory_kind, territory_name;
 ```
 
 ## Сверка: свод (код 95) против суммы субъектов

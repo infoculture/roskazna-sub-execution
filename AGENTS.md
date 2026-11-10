@@ -22,8 +22,13 @@
 ## Где что
 
 * Конвейер и модули — [README.md](README.md).
-* Содержание файлов и варианты макетов по годам — [docs/files.md](docs/files.md).
-* Схема БД и принципы — [docs/database.md](docs/database.md).
+* Источник, каталог, аномалии — [docs/sources.md](docs/sources.md).
+* Содержание пакетов, имена и форматы файлов по годам — [docs/files.md](docs/files.md).
+* Формы и макеты таблиц по годам — [docs/forms/](docs/forms/README.md).
+* Коды территорий — [docs/territories.md](docs/territories.md).
+* Схема БД, правила агрегирования — [docs/database.md](docs/database.md).
+* Признаки качества и известные проблемы — [docs/data-quality.md](docs/data-quality.md);
+  после исправления проблемы из списка обновите таблицу «Известные проблемы».
 * Сопровождение и типовые правки — [docs/maintenance.md](docs/maintenance.md).
-* Покрытие (генерируется) — [docs/coverage.md](docs/coverage.md).
-* Примеры запросов и графиков — [docs/examples.ipynb](docs/examples.ipynb).
+* Покрытие и сверки (генерируется `scripts/coverage.py`) — [docs/coverage.md](docs/coverage.md).
+* Примеры запросов и графиков — [docs/queries.md](docs/queries.md), [docs/examples.ipynb](docs/examples.ipynb).

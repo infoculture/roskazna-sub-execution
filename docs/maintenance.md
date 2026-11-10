@@ -44,6 +44,22 @@ jupyter nbconvert --to notebook --execute --inplace docs/examples.ipynb   # 7. �
 Перед коммитом: `python -m pytest`, `git diff data/catalog/` (новые карточки и пакеты,
 изменившиеся SHA-256).
 
+## Релиз с данными
+
+Данные публикуются релизом на GitHub (лимит — 2 ГиБ на файл): исходные пакеты по группам
+лет в tar, Parquet-выгрузка в tar, база DuckDB в zstd по частям, реестры и `SHA256SUMS.txt`.
+
+```bash
+mkdir -p /tmp/release && scripts/pack_release.sh /tmp/release     # ≈ 15 ГБ, 10–20 минут
+TAG=v$(date +%Y.%m.%d)
+gh release create "$TAG" --draft --title "Данные на $(date +%d.%m.%Y)" --notes-file notes.md
+gh release upload "$TAG" /tmp/release/*                           # загрузка, можно повторять
+gh release edit "$TAG" --draft=false
+```
+
+Перед упаковкой проверьте, что каждый tar меньше 2 ГиБ (границы групп лет — в
+`scripts/pack_release.sh`), и обновите тег и таблицу файлов в README («Готовые данные»).
+
 ## Устройство кода
 
 ```

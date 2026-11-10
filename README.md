@@ -43,6 +43,32 @@ FROM v_0503317_totals WHERE territory_code = '95' AND period_months = 12 ORDER B
 (доходы и расходы консолидированных бюджетов субъектов РФ по годам, трлн руб.:
 2011 — 8,03 / 8,05 … 2025 — 29,69 / 31,20)
 
+## Готовые данные (релиз на GitHub)
+
+Чтобы не собирать базу самостоятельно (и не ходить на портал через прокси), скачайте
+данные из релиза [v2026.11.05](https://github.com/infoculture/roskazna-sub-execution/releases/tag/v2026.11.05)
+(срез каталога на 05.11.2026):
+
+| Файл | Содержание | Куда распаковать |
+|---|---|---|
+| `roskazna_kbs.duckdb.zst.part-NN` | база DuckDB со всеми таблицами и витринами (zstd, части по 1900 МиБ) | `data/db/` |
+| `export-parquet.tar` | Parquet-выгрузка всех таблиц | `data/export/` |
+| `raw-annual-2000-2025.tar`, `raw-monthly-<годы>.tar` | исходные пакеты портала (338 ZIP) | `data/raw/zip/` |
+| `catalog.csv`, `files.csv`, `members.csv.gz` | реестры карточек, пакетов и файлов в пакетах | `data/catalog/` |
+| `SHA256SUMS.txt` | контрольные суммы | — |
+
+```bash
+gh release download v2026.11.05 -R infoculture/roskazna-sub-execution -D release
+(cd release && shasum -a 256 -c SHA256SUMS.txt)
+mkdir -p data/db && cat release/roskazna_kbs.duckdb.zst.part-* | zstd -d -o data/db/roskazna_kbs.duckdb
+tar -xf release/export-parquet.tar -C data                           # → data/export/
+for f in release/raw-*.tar; do tar -xf "$f" -C data; done            # → data/raw/zip/
+```
+
+Только база — достаточно частей `roskazna_kbs.duckdb.zst.part-*` (≈ 1,7 ГБ). Распакованные
+исходные пакеты позволяют пересобрать базу (`python -m roskazna_kbs build`) без доступа к
+порталу.
+
 ## Документация
 
 | Документ | Содержание |
@@ -69,6 +95,7 @@ data/db/                части Parquet и база DuckDB (не в git; во
 data/export/            выгрузка таблиц БД в Parquet (не в git; команда export)
 docs/                   документация (см. выше); docs/forms/ — описание каждой формы
 scripts/coverage.py     отчёт о покрытии и сверках → docs/coverage.md
+scripts/pack_release.sh упаковка данных для релиза на GitHub
 sql/schema.sql          схема БД (DDL)
 sql/views.sql           витрины (представления)
 sql/dicts/*.csv         справочники форм, разделов, типов публикаций
